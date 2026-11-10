@@ -15,4 +15,4 @@
 - `RESPONSES.md` — ответы автора на замечания.
 - `CHANGELOG.md` — журнал изменений.
 
-Запуск из корня репозитория: `python3 -m unittest discover -s tests -v` (Python 3.9+). Сторонних зависимостей нет. Реализация находится в `submarine.py`, вопросы к ТЗ — в `BUGREPORT.md`. Тесты автора не изменялись.
+Запуск из корня репозитория: `python3 -m unittest discover -s tests -v` (Python 3.9+).
