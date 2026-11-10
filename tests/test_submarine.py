@@ -10,7 +10,11 @@ class TestSubmarine(unittest.TestCase):
         """TC-01."""
         # Arrange / Act / Assert
         r = Submarine("Жемчужина", 2)
-        self.assertEqual((r.name, r.propeller_diameter_m, r.energy, r.depth_m, r.distance_km, r.propeller_intact), ("Жемчужина", 2, 100, 0, 0, True))
+        self.assertEqual((r.name, r.propeller_diameter_m, r.energy, r.depth_m, r.distance_km, r.propeller_intact), ("Жемчужина", 2.0, 100.0, 0.0, 0.0, True))
+        self.assertIsInstance(r.propeller_diameter_m, float)
+        self.assertIsInstance(r.energy, float)
+        self.assertIsInstance(r.depth_m, float)
+        self.assertIsInstance(r.distance_km, float)
 
     def test_TC_02(self):
         """TC-02."""
@@ -57,8 +61,10 @@ class TestSubmarine(unittest.TestCase):
         r = Submarine("Жемчужина", 2)
         r.dive(10)
         result = r.swim(10)
-        self.assertAlmostEqual(result, 1)
-        self.assertEqual((r.energy, r.distance_km, r.depth_m), (80, 10, 10))
+        self.assertAlmostEqual(result, 1, delta=1e-7)
+        self.assertAlmostEqual(r.energy, 80, delta=1e-7)
+        self.assertAlmostEqual(r.distance_km, 10, delta=1e-7)
+        self.assertEqual(r.depth_m, 10)
 
     def test_TC_08(self):
         """TC-08."""
@@ -66,8 +72,9 @@ class TestSubmarine(unittest.TestCase):
         r = Submarine("Жемчужина", 2, 10)
         r.dive(1)
         result = r.swim(5)
-        self.assertAlmostEqual(result, 0.5)
-        self.assertEqual((r.energy, r.distance_km), (0, 5))
+        self.assertAlmostEqual(result, 0.5, delta=1e-7)
+        self.assertAlmostEqual(r.energy, 0, delta=1e-7)
+        self.assertAlmostEqual(r.distance_km, 5, delta=1e-7)
 
     def test_TC_09(self):
         """TC-09."""
@@ -92,8 +99,12 @@ class TestSubmarine(unittest.TestCase):
         """TC-11."""
         # Arrange / Act / Assert
         r = Submarine("Жемчужина", 2)
+        r.dive(10)
+        r.swim(5)
+        before = r.get_status()
         with self.assertRaises(TypeError):
             r.dive("10")
+        self.assertEqual(r.get_status(), before)
 
     def test_TC_12(self):
         """TC-12."""
@@ -104,14 +115,23 @@ class TestSubmarine(unittest.TestCase):
         self.assertIsNone(result)
         before["energy"] = 100
         self.assertEqual(r.get_status(), before)
+        r = Submarine("Жемчужина", 2, 50)
+        before = r.get_status()
+        self.assertIsNone(r.recharge(0.25))
+        before["energy"] = 50.25
+        self.assertEqual(r.get_status(), before)
 
     def test_TC_13(self):
         """TC-13."""
         # Arrange / Act / Assert
         r = Submarine("Жемчужина", 2)
+        r.dive(10)
+        r.swim(5)
+        before = r.get_status()
         for amount in (0, -1):
             with self.subTest(amount=amount), self.assertRaises(ValueError):
                 r.recharge(amount)
+            self.assertEqual(r.get_status(), before)
 
     def test_TC_14(self):
         """TC-14."""
@@ -168,20 +188,38 @@ class TestSubmarine(unittest.TestCase):
         """TC-19."""
         # Arrange / Act / Assert
         r = Submarine("Жемчужина", 2)
+        r.dive(10)
+        r.swim(5)
+        before = r.get_status()
         with self.assertRaises(TypeError):
             r.swim("1")
+        self.assertEqual(r.get_status(), before)
         with self.assertRaises(TypeError):
             r.recharge(True)
+        self.assertEqual(r.get_status(), before)
 
     def test_TC_20(self):
         """TC-20."""
         # Arrange / Act / Assert
+        r = Submarine("Жемчужина", 2)
+        r.dive(10)
+        r.swim(5)
+        before = r.get_status()
         for x in (float("nan"), float("inf"), float("-inf")):
             with self.subTest(value=x):
                 with self.assertRaises(ValueError):
                     Submarine("Жемчужина", 2, x)
                 with self.assertRaises(ValueError):
-                    Submarine("Жемчужина", 2).swim(x)
+                    Submarine("Жемчужина", x)
+                with self.assertRaises(ValueError):
+                    r.dive(x)
+                self.assertEqual(r.get_status(), before)
+                with self.assertRaises(ValueError):
+                    r.recharge(x)
+                self.assertEqual(r.get_status(), before)
+                with self.assertRaises(ValueError):
+                    r.swim(x)
+                self.assertEqual(r.get_status(), before)
 
     def test_TC_21(self):
         """TC-21."""
@@ -190,8 +228,10 @@ class TestSubmarine(unittest.TestCase):
         p.dive(20)
         elapsed = p.swim(10)
         p.dive(0)
-        self.assertAlmostEqual(elapsed, 1)
-        self.assertEqual((p.submarine.distance_km, p.submarine.energy, p.submarine.depth_m), (10, 80, 0))
+        self.assertAlmostEqual(elapsed, 1, delta=1e-7)
+        self.assertAlmostEqual(p.submarine.energy, 80, delta=1e-7)
+        self.assertAlmostEqual(p.submarine.distance_km, 10, delta=1e-7)
+        self.assertEqual(p.submarine.depth_m, 0)
 
     def test_TC_22(self):
         """TC-22."""
@@ -204,8 +244,9 @@ class TestSubmarine(unittest.TestCase):
             p.swim(1)
         self.assertEqual(p.submarine.get_status(), before)
         p.repair_propeller()
-        self.assertAlmostEqual(p.swim(1), 0.1)
-        self.assertEqual((p.submarine.distance_km, p.submarine.energy), (1, 98))
+        self.assertAlmostEqual(p.swim(1), 0.1, delta=1e-7)
+        self.assertAlmostEqual(p.submarine.energy, 98, delta=1e-7)
+        self.assertAlmostEqual(p.submarine.distance_km, 1, delta=1e-7)
 
     def test_TC_23(self):
         """TC-23."""
@@ -229,4 +270,44 @@ class TestSubmarine(unittest.TestCase):
         self.assertEqual(p.submarine.get_status(), before)
         p.dive(0)
         self.assertEqual((p.submarine.depth_m, p.submarine.energy, p.submarine.distance_km), (0, 5, 0))
+
+    def test_TC_25(self):
+        """TC-25."""
+        # Given / When / Then
+        r = Submarine("Жемчужина", 2, 0)
+        r.damage_propeller()
+        before = r.get_status()
+        with self.assertRaises(NotSubmergedError):
+            r.swim(1)
+        self.assertEqual(r.get_status(), before)
+        r.dive(1)
+        before = r.get_status()
+        with self.assertRaises(PropellerDamagedError):
+            r.swim(1)
+        self.assertEqual(r.get_status(), before)
+        r.repair_propeller()
+        before = r.get_status()
+        with self.assertRaises(NotEnoughEnergyError):
+            r.swim(1)
+        self.assertEqual(r.get_status(), before)
+
+    def test_TC_26(self):
+        """TC-26."""
+        # Given / When / Then
+        self.assertTrue(issubclass(SubmarineError, Exception))
+        for error in (NotSubmergedError, PropellerDamagedError, NotEnoughEnergyError):
+            with self.subTest(error=error.__name__):
+                self.assertTrue(issubclass(error, SubmarineError))
+
+    def test_TC_27(self):
+        """TC-27."""
+        # Given / When / Then
+        r = Submarine("Жемчужина", 2)
+        before = r.get_status()
+        with self.assertRaises(AttributeError):
+            r.energy = 0
+        self.assertEqual(r.get_status(), before)
+        with self.assertRaises(AttributeError):
+            del r.energy
+        self.assertEqual(r.get_status(), before)
 
